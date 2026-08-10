@@ -1,64 +1,139 @@
 # WorkSphere — Full-Stack Project Management & Analytics Platform
 
-WorkSphere is an advanced full-stack web application for managing teams, projects, tasks and project activity from a single dashboard.
+WorkSphere is an advanced internship-ready full-stack application for managing projects, tasks, users, activity and workspace analytics from one responsive dashboard.
 
-## Features
-- JWT authentication and protected routes
-- Role-based access: Admin and Member
-- Project creation and management
-- Task CRUD with priority, status, due dates and assignees
-- Search and filtering
-- Project progress analytics
-- Activity/audit log
-- Responsive dashboard UI
-- REST API
-- SQLite database for easy local setup
+## Core Features
+- User registration and login with JWT authentication
+- Password hashing with bcrypt
+- Admin/member roles
+- Project creation, status and progress tracking
+- Task creation, completion, priority and due dates
+- Task search and filtering
+- Workspace analytics and completion metrics
+- Activity/audit history
+- Team/user API
+- RESTful backend API
+- SQLite relational database
+- Responsive React dashboard
+- GitHub Actions CI configuration
 
-## Tech Stack
-Frontend: React + Vite + CSS
-Backend: Node.js + Express.js
-Database: SQLite + better-sqlite3
-Authentication: JWT + bcryptjs
+## Technology Stack
+- **Frontend:** React 18, Vite 5, JavaScript, CSS
+- **Backend:** Node.js, Express 4
+- **Database:** SQLite with better-sqlite3
+- **Authentication:** JWT + bcryptjs
+- **Icons:** Lucide React
 
-## Run locally
+## Project Structure
+```text
+ideal-octo-system/
+├── client/
+│   ├── src/main.jsx
+│   ├── src/styles.css
+│   ├── package.json
+│   └── vite.config.js
+├── server/
+│   ├── src/
+│   │   ├── db.js
+│   │   ├── auth.js
+│   │   ├── activity.js
+│   │   ├── server.js
+│   │   └── routes/
+│   │       ├── auth.js
+│   │       ├── projects.js
+│   │       ├── tasks.js
+│   │       ├── analytics.js
+│   │       ├── users.js
+│   │       └── activity.js
+│   ├── package.json
+│   └── .env.example
+├── docs/
+└── .github/workflows/ci.yml
+```
 
-### 1. Backend
-```bash
+## Requirements
+- Node.js 18 or newer
+- npm 9 or newer
+
+## Run the Backend (Windows)
+Open a terminal in the project root:
+
+```powershell
 cd server
 npm install
-copy .env.example .env
+Copy-Item .env.example .env
 npm run dev
 ```
 
-### 2. Frontend
-Open another terminal:
-```bash
+The API should start at:
+
+`http://localhost:5000`
+
+Test it in your browser:
+
+`http://localhost:5000/api/health`
+
+Expected response:
+
+```json
+{
+  "status": "ok",
+  "service": "WorkSphere API",
+  "version": "1.0.0"
+}
+```
+
+## Run the Frontend
+Open a **second terminal** in the project root:
+
+```powershell
 cd client
 npm install
 npm run dev
 ```
 
-Frontend: http://localhost:5173
-Backend: http://localhost:5000
+Open the URL printed by Vite, normally:
 
-## API
-- POST /api/auth/register
-- POST /api/auth/login
-- GET /api/auth/me
-- GET /api/projects
-- POST /api/projects
-- PATCH /api/projects/:id
-- DELETE /api/projects/:id
-- GET /api/tasks
-- POST /api/tasks
-- PATCH /api/tasks/:id
-- DELETE /api/tasks/:id
-- GET /api/activity
+`http://localhost:5173`
+
+## First Login
+Open the registration page and create an account. The first registered account is assigned the Admin role.
+
+## API Endpoints
+### Authentication
+- `POST /api/auth/register`
+- `POST /api/auth/login`
+- `GET /api/auth/me`
+
+### Projects
+- `GET /api/projects`
+- `POST /api/projects`
+- `PATCH /api/projects/:id`
+- `DELETE /api/projects/:id`
+
+### Tasks
+- `GET /api/tasks`
+- `POST /api/tasks`
+- `PATCH /api/tasks/:id`
+- `DELETE /api/tasks/:id`
+
+### Analytics & Workspace
+- `GET /api/analytics/summary`
+- `GET /api/users`
+- `GET /api/activity`
 
 ## Environment
-`server/.env`
+Create `server/.env` from `.env.example`:
+
 ```env
 PORT=5000
-JWT_SECRET=change_this_to_a_long_random_secret
+JWT_SECRET=replace_with_a_long_random_secret
 CLIENT_URL=http://localhost:5173
 ```
+
+Never commit the real `.env` file.
+
+## Internship Submission
+Project: **WorkSphere – Full-Stack Project Management & Analytics Platform**
+
+The repository contains both frontend and backend source code, database logic, API documentation and setup instructions.
