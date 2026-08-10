@@ -1,10 +1,80 @@
-import {Router} from "express";
+import { Router } from "express";
 import db from "../db.js";
-import {requireAuth} from "../auth.js";
-import {logActivity} from "../activity.js";
-const router=Router();router.use(requireAuth);
-router.get("/",(req,res)=>{const{projectId,status,priority,search}=req.query;let sql=`SELECT t.*,p.name project_name,u.name assignee_name FROM tasks t JOIN projects p ON p.id=t.project_id LEFT JOIN users u ON u.id=t.assignee_id WHERE p.owner_id=?`;const params=[req.user.id];if(projectId){sql+=" AND t.project_id=?";params.push(projectId)}if(status&&status!=="all"){sql+=" AND t.status=?";params.push(status)}if(priority&&priority!=="all"){sql+=" AND t.priority=?";params.push(priority)}if(search){sql+=" AND (t.title LIKE ? OR t.description LIKE ?)";params.push(`%${search}%`,`%${search}%`)}sql+=" ORDER BY CASE t.priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END,t.created_at DESC";res.json(db.prepare(sql).all(...params));});
-router.post("/",(req,res)=>{const{project_id,title,description="",status="todo",priority="medium",due_date=null,assignee_id=null}=req.body;const project=db.prepare("SELECT * FROM projects WHERE id=? AND owner_id=?").get(project_id,req.user.id);if(!project)return res.status(404).json({message:"Project not found"});if(!title?.trim())return res.status(400).json({message:"Task title is required"});const r=db.prepare("INSERT INTO tasks(project_id,title,description,status,priority,due_date,assignee_id) VALUES(?,?,?,?,?,?,?)").run(project_id,title.trim(),description,status,priority,due_date,assignee_id);logActivity(req.user.id,"created","task",r.lastInsertRowid);res.status(201).json(db.prepare("SELECT * FROM tasks WHERE id=?").get(r.lastInsertRowid));});
-router.patch("/:id",(req,res)=>{const task=db.prepare("SELECT t.* FROM tasks t JOIN projects p ON p.id=t.project_id WHERE t.id=? AND p.owner_id=?").get(req.params.id,req.user.id);if(!task)return res.status(404).json({message:"Task not found"});const d={...task,...req.body};db.prepare("UPDATE tasks SET title=?,description=?,status=?,priority=?,due_date=?,assignee_id=? WHERE id=?").run(d.title,d.description,d.status,d.priority,d.due_date,d.assignee_id,task.id);logActivity(req.user.id,"updated","task",task.id);res.json(db.prepare("SELECT * FROM tasks WHERE id=?").get(task.id));});
-router.delete("/:id",(req,res)=>{const task=db.prepare("SELECT t.* FROM tasks t JOIN projects p ON p.id=t.project_id WHERE t.id=? AND p.owner_id=?").get(req.params.id,req.user.id);if(!task)return res.status(404).json({message:"Task not found"});db.prepare("DELETE FROM tasks WHERE id=?").run(task.id);logActivity(req.user.id,"deleted","task",task.id);res.json({message:"Task deleted"});});
+import { requireAuth } from "../auth.js";
+import { logActivity } from "../activity.js";
+
+const router = Router();
+router.use(requireAuth);
+
+router.get("/", (req, res) => {
+  const { projectId, status, priority, search } = req.query;
+  let sql = `
+    SELECT t.*, p.name AS project_name, u.name AS assignee_name
+    FROM tasks t JOIN projects p ON p.id=t.project_id
+    LEFT JOIN users u ON u.id=t.assignee_id
+    WHERE p.owner_id=?`;
+  const params = [req.user.id];
+
+  if (projectId) { sql += " AND t.project_id=?"; params.push(projectId); }
+  if (status && status !== "all") { sql += " AND t.status=?"; params.push(status); }
+  if (priority && priority !== "all") { sql += " AND t.priority=?"; params.push(priority); }
+  if (search) {
+    sql += " AND (t.title LIKE ? OR t.description LIKE ?)";
+    params.push(`%${search}%`, `%${search}%`);
+  }
+  sql += " ORDER BY CASE t.priority WHEN 'high' THEN 1 WHEN 'medium' THEN 2 ELSE 3 END, t.created_at DESC";
+  res.json(db.prepare(sql).all(...params));
+});
+
+router.post("/", (req, res) => {
+  const {
+    project_id, title, description = "", status = "todo", priority = "medium",
+    due_date = null, assignee_id = null
+  } = req.body;
+
+  const project = db.prepare("SELECT * FROM projects WHERE id=? AND owner_id=?")
+    .get(project_id, req.user.id);
+  if (!project) return res.status(404).json({ message: "Project not found" });
+  if (!title?.trim()) return res.status(400).json({ message: "Task title is required" });
+
+  const r = db.prepare(`
+    INSERT INTO tasks (project_id,title,description,status,priority,due_date,assignee_id)
+    VALUES (?,?,?,?,?,?,?)
+  `).run(project_id, title.trim(), description, status, priority, due_date, assignee_id);
+
+  logActivity(req.user.id, "created", "task", r.lastInsertRowid);
+  res.status(201).json(db.prepare("SELECT * FROM tasks WHERE id=?").get(r.lastInsertRowid));
+});
+
+router.patch("/:id", (req, res) => {
+  const task = db.prepare(`
+    SELECT t.* FROM tasks t JOIN projects p ON p.id=t.project_id
+    WHERE t.id=? AND p.owner_id=?
+  `).get(req.params.id, req.user.id);
+
+  if (!task) return res.status(404).json({ message: "Task not found" });
+
+  const d = { ...task, ...req.body };
+  db.prepare(`
+    UPDATE tasks
+    SET title=?, description=?, status=?, priority=?, due_date=?, assignee_id=?
+    WHERE id=?
+  `).run(d.title, d.description, d.status, d.priority, d.due_date, d.assignee_id, task.id);
+
+  logActivity(req.user.id, "updated", "task", task.id);
+  res.json(db.prepare("SELECT * FROM tasks WHERE id=?").get(task.id));
+});
+
+router.delete("/:id", (req, res) => {
+  const task = db.prepare(`
+    SELECT t.* FROM tasks t JOIN projects p ON p.id=t.project_id
+    WHERE t.id=? AND p.owner_id=?
+  `).get(req.params.id, req.user.id);
+
+  if (!task) return res.status(404).json({ message: "Task not found" });
+  db.prepare("DELETE FROM tasks WHERE id=?").run(task.id);
+  logActivity(req.user.id, "deleted", "task", task.id);
+  res.json({ message: "Task deleted" });
+});
+
 export default router;
