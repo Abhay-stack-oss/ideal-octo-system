@@ -1,0 +1,10 @@
+import {Router} from "express";
+import db from "../db.js";
+import {requireAuth} from "../auth.js";
+import {logActivity} from "../activity.js";
+const router=Router();router.use(requireAuth);
+router.get("/",(req,res)=>res.json(db.prepare(`SELECT p.*,u.name owner_name,(SELECT COUNT(*) FROM tasks t WHERE t.project_id=p.id) task_count,(SELECT COUNT(*) FROM tasks t WHERE t.project_id=p.id AND t.status='done') done_count FROM projects p JOIN users u ON u.id=p.owner_id WHERE p.owner_id=? ORDER BY p.created_at DESC`).all(req.user.id)));
+router.post("/",(req,res)=>{const{name,description=""}=req.body;if(!name?.trim())return res.status(400).json({message:"Project name is required"});const r=db.prepare("INSERT INTO projects(name,description,owner_id) VALUES(?,?,?)").run(name.trim(),description,req.user.id);logActivity(req.user.id,"created","project",r.lastInsertRowid);res.status(201).json(db.prepare("SELECT * FROM projects WHERE id=?").get(r.lastInsertRowid));});
+router.patch("/:id",(req,res)=>{const p=db.prepare("SELECT * FROM projects WHERE id=?").get(req.params.id);if(!p)return res.status(404).json({message:"Project not found"});if(p.owner_id!==req.user.id&&req.user.role!=="admin")return res.status(403).json({message:"Not allowed"});const{name=p.name,description=p.description,status=p.status}=req.body;db.prepare("UPDATE projects SET name=?,description=?,status=? WHERE id=?").run(name,description,status,p.id);logActivity(req.user.id,"updated","project",p.id);res.json(db.prepare("SELECT * FROM projects WHERE id=?").get(p.id));});
+router.delete("/:id",(req,res)=>{const p=db.prepare("SELECT * FROM projects WHERE id=?").get(req.params.id);if(!p)return res.status(404).json({message:"Project not found"});if(p.owner_id!==req.user.id&&req.user.role!=="admin")return res.status(403).json({message:"Not allowed"});db.prepare("DELETE FROM projects WHERE id=?").run(p.id);logActivity(req.user.id,"deleted","project",p.id);res.json({message:"Project deleted"});});
+export default router;
