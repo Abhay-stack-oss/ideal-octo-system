@@ -2,6 +2,14 @@
 
 WorkSphere is an advanced internship-ready full-stack application for managing projects, tasks, users, activity and workspace analytics from one responsive dashboard.
 
+## Project Links
+
+- **Frontend:** [Task Manager Frontend](https://github.com/Abhay-stack-oss/ideal-octo-system/tree/agent/task-manager-upload/task-manager/frontend)
+- **Backend:** [Task Manager Backend](https://github.com/Abhay-stack-oss/ideal-octo-system/tree/agent/task-manager-upload/task-manager/backend)
+- **Task Manager README:** [Setup & API Documentation](https://github.com/Abhay-stack-oss/ideal-octo-system/blob/agent/task-manager-upload/task-manager/README.md)
+
+> Note: These links point to the current upload branch. After the pull request is merged into `main`, the links will be available from the main repository as well.
+
 ## Core Features
 - User registration and login with JWT authentication
 - Password hashing with bcrypt
@@ -47,6 +55,10 @@ ideal-octo-system/
 │   │       └── activity.js
 │   ├── package.json
 │   └── .env.example
+├── task-manager/
+│   ├── frontend/
+│   ├── backend/
+│   └── README.md
 ├── docs/
 └── .github/workflows/ci.yml
 ```
